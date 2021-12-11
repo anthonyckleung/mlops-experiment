@@ -133,3 +133,4 @@ dmypy.json
 /data
 
 lightning_logs/
+models/
