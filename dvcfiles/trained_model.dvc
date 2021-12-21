@@ -1,0 +1,5 @@
+wdir: ../notebooks/models
+outs:
+- md5: 99746afc844e4a3364978c318e5106d1
+  size: 6578
+  path: best-checkpoint.ckpt
