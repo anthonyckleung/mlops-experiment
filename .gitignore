@@ -132,5 +132,7 @@ dmypy.json
 
 lightning_logs/
 
+
+models/
 wandb/
 hf_model/
