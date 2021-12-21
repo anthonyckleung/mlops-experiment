@@ -1,0 +1,6 @@
+[core]
+    remote = storage
+['remote "origin"']
+    url = https://dagshub.com/anthonyckleung/mlops-experiment.dvc
+['remote "storage"']
+    url = gdrive://1neRcuFQ7zeEzxyi3PwEV30m_0XTdru3s
