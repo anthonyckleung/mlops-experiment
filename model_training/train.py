@@ -17,6 +17,9 @@ from ml_model import HabermanANN
 
 load_dotenv()
 
+# Seed everything
+pl.seed_everything(42)
+
 # Login to Weights & Biases
 WANDB_API_KEY = os.getenv("WANDB_API_KEY")
 wandb.login(key=WANDB_API_KEY)
@@ -61,6 +64,7 @@ class SamplesVisualisationLogger(pl.Callback):
 @hydra.main(config_path=config_dir, config_name="config")
 def train(cfg):
     root_dir = Path(hydra.utils.get_original_cwd())
+    model_dir = Path.joinpath(root_dir, "models")
     haberman_data = HabermanDataModule(data_path, 
         cfg.training.train_bs, 
         cfg.training.val_bs
@@ -68,7 +72,7 @@ def train(cfg):
     haberman_model = HabermanANN()
 
     checkpoint_callback = ModelCheckpoint(
-        dirpath = Path.joinpath(root_dir, "models"),
+        dirpath = model_dir,
         filename="best-checkpoint",
         monitor = "val/loss",
         mode = "min"
@@ -97,6 +101,27 @@ def train(cfg):
     # Perform evaluation
     trainer.test(haberman_model, haberman_data)
     wandb.finish()
+
+    # To ONNX
+    # haberman_data.prepare_data()
+    haberman_data.setup()
+    input_batch = next(iter(haberman_data.train_dataloader()))
+    input_sample = {
+        "features": input_batch["features"][0]
+    }
+
+    onnx_model_path = Path(model_dir, "model.onnx")
+    haberman_model.to_onnx(onnx_model_path,
+        input_sample=input_sample['features'],
+        export_params=True,
+        opset_version=10,
+        input_names = ['input'],
+        output_names = ['output'],
+        dynamic_axes = {
+            'input': {0: 'batch_size'},
+            'output': {0: 'batch_size'}
+        }
+    )
 
 
 if __name__=="__main__":
