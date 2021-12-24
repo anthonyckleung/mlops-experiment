@@ -60,6 +60,7 @@ class SamplesVisualisationLogger(pl.Callback):
 
 @hydra.main(config_path=config_dir, config_name="config")
 def train(cfg):
+    root_dir = Path(hydra.utils.get_original_cwd())
     haberman_data = HabermanDataModule(data_path, 
         cfg.training.train_bs, 
         cfg.training.val_bs
@@ -67,14 +68,14 @@ def train(cfg):
     haberman_model = HabermanANN()
 
     checkpoint_callback = ModelCheckpoint(
-        dirpath = Path('models'),
+        dirpath = Path.joinpath(root_dir, "models"),
         filename="best-checkpoint",
         monitor = "val/loss",
         mode = "min"
     )
 
     early_stopping_callback = EarlyStopping(
-        monitor="valid/loss", patience=3, verbose=True, mode="min"
+        monitor="val/loss", patience=3, verbose=True, mode="min"
     )
 
     
@@ -87,7 +88,9 @@ def train(cfg):
         accelerator='cpu',
         log_every_n_steps = 5,
         logger=wandb_logger,
-        callbacks = [checkpoint_callback, SamplesVisualisationLogger(haberman_data)]
+        callbacks = [checkpoint_callback, 
+        SamplesVisualisationLogger(haberman_data),
+        early_stopping_callback]
     )
     trainer.fit(haberman_model, haberman_data)
 
