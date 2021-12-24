@@ -136,3 +136,6 @@ lightning_logs/
 models/
 wandb/
 hf_model/
+
+.vscode/
+outputs/

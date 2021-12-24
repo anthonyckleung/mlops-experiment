@@ -1,4 +1,4 @@
-wdir: ../data
+wdir: data
 outs:
 - md5: 04c58767ac950ef268943e8fe98912e4
   size: 3442
