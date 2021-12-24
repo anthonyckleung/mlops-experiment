@@ -1,9 +1,11 @@
 import hydra
+import os
 import pandas as pd
 import pytorch_lightning as pl
 import torch 
 import wandb
 
+from dotenv import load_dotenv
 from omegaconf.omegaconf import OmegaConf
 from pathlib import Path
 from pytorch_lightning.callbacks import ModelCheckpoint
@@ -13,8 +15,16 @@ from pytorch_lightning.loggers import WandbLogger
 from data import HabermanDataModule
 from ml_model import HabermanANN
 
+load_dotenv()
+
+# Login to Weights & Biases
+WANDB_API_KEY = os.getenv("WANDB_API_KEY")
+wandb.login(key=WANDB_API_KEY)
+
+# Get all relevent configs from Hydra
 config_dir = Path.cwd().joinpath("configs")
 data_path = Path.cwd().joinpath("data", "haberman.csv")
+
 
 class SamplesVisualisationLogger(pl.Callback):
     def __init__(self, datamodule):
@@ -50,13 +60,42 @@ class SamplesVisualisationLogger(pl.Callback):
 
 @hydra.main(config_path=config_dir, config_name="config")
 def train(cfg):
-    train_data = HabermanDataModule(data_path, 
+    haberman_data = HabermanDataModule(data_path, 
         cfg.training.train_bs, 
         cfg.training.val_bs
     )
-    print("Got the data bitches!")
+    haberman_model = HabermanANN()
+
+    checkpoint_callback = ModelCheckpoint(
+        dirpath = Path('models'),
+        filename="best-checkpoint",
+        monitor = "val/loss",
+        mode = "min"
+    )
+
+    early_stopping_callback = EarlyStopping(
+        monitor="valid/loss", patience=3, verbose=True, mode="min"
+    )
+
+    
+    wandb_logger = WandbLogger(project="MLOps Basics")
+
+    trainer = pl.Trainer(
+        # gpus=(1 if torch.cuda.is_available() else 0),
+        max_epochs=10,
+        fast_dev_run=False,
+        accelerator='cpu',
+        log_every_n_steps = 5,
+        logger=wandb_logger,
+        callbacks = [checkpoint_callback, SamplesVisualisationLogger(haberman_data)]
+    )
+    trainer.fit(haberman_model, haberman_data)
+
+    # Perform evaluation
+    trainer.test(haberman_model, haberman_data)
+    wandb.finish()
 
 
-if __name__ == "__main__":
+if __name__=="__main__":
     train()
 

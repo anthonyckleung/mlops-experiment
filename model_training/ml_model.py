@@ -1,11 +1,9 @@
-import hydra
 import pytorch_lightning as pl
 import torch 
 import torch.nn as nn
 import torchmetrics
 import wandb
 
-from omegaconf import OmegaConf
 from torch.nn import functional as F
 from sklearn.metrics import accuracy_score
 
