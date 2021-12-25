@@ -9,3 +9,4 @@ dependencies:
 - pip
 - pip:
   - mlflow==1.22.0
+  - torchvision==0.9.1
